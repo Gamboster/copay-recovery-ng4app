@@ -1,20 +1,61 @@
 <!--The content below is only a placeholder and can be replaced.-->
-<div style="text-align:center">
-  <h1>
-    Copay Recovery Tool
-  </h1>
-  <img width="300" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4xLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9IjAgMCAyNTAgMjUwIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCAyNTAgMjUwOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8c3R5bGUgdHlwZT0idGV4dC9jc3MiPg0KCS5zdDB7ZmlsbDojREQwMDMxO30NCgkuc3Qxe2ZpbGw6I0MzMDAyRjt9DQoJLnN0MntmaWxsOiNGRkZGRkY7fQ0KPC9zdHlsZT4NCjxnPg0KCTxwb2x5Z29uIGNsYXNzPSJzdDAiIHBvaW50cz0iMTI1LDMwIDEyNSwzMCAxMjUsMzAgMzEuOSw2My4yIDQ2LjEsMTg2LjMgMTI1LDIzMCAxMjUsMjMwIDEyNSwyMzAgMjAzLjksMTg2LjMgMjE4LjEsNjMuMiAJIi8+DQoJPHBvbHlnb24gY2xhc3M9InN0MSIgcG9pbnRzPSIxMjUsMzAgMTI1LDUyLjIgMTI1LDUyLjEgMTI1LDE1My40IDEyNSwxNTMuNCAxMjUsMjMwIDEyNSwyMzAgMjAzLjksMTg2LjMgMjE4LjEsNjMuMiAxMjUsMzAgCSIvPg0KCTxwYXRoIGNsYXNzPSJzdDIiIGQ9Ik0xMjUsNTIuMUw2Ni44LDE4Mi42aDBoMjEuN2gwbDExLjctMjkuMmg0OS40bDExLjcsMjkuMmgwaDIxLjdoMEwxMjUsNTIuMUwxMjUsNTIuMUwxMjUsNTIuMUwxMjUsNTIuMQ0KCQlMMTI1LDUyLjF6IE0xNDIsMTM1LjRIMTA4bDE3LTQwLjlMMTQyLDEzNS40eiIvPg0KPC9nPg0KPC9zdmc+DQo=">
-</div>
-<h2>Here are some links to help you start: </h2>
-<ul>
-  <li>
-    <h2><a target="_blank" href="https://angular.io/tutorial">Tour of Heroes</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" href="https://github.com/angular/angular-cli/wiki">CLI Documentation</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" href="http://angularjs.blogspot.ca/">Angular blog</a></h2>
-  </li>
-</ul>
+<div class="container">
 
+<h2>WALLET CONFIGURATION</h2>
+<form #processInputsForm="ngForm" (ngSubmit)="processInputs()">
+  <div class="form-group">
+    <label for="signaturesNumber">Required number of signatures</label>
+    <select class="form-control" id="signaturesNumber" name="signaturesNumber" [(ngModel)]="signaturesNumber">
+      <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="copayersNumber">Total number of Copayers</label>
+    <select class="form-control" id="copayersNumber" name="copayersNumber" [(ngModel)]="copayersNumber" (ngModelChange)="updateCopayersForm($event)">
+      <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="network">Network</label>
+    <select class="form-control" id="network" name="network" [(ngModel)]="network">
+      <option *ngFor="let network of availableNetworks" [ngValue]="network">{{network}}</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="addressGap">Address Gap</label><span> (Usually does not need to be changed)</span>
+    <input type="number" class="form-control" id="addressGap" name="addressGap" [(ngModel)]="addressGap" required>
+  </div>
+
+  <div *ngFor="let copayer of copayers">
+    <div class="form-group">
+      <label for="dataBackUp">Backup for copayer {{copayer}}:</label>
+      <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="this['dataBackUp' + copayer]" placeholder="Mnemonic or exported wallet data">
+    </div>
+
+    <div class="form-group">
+      <label for="contentFile">Or upload a file:</label>
+      <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt"
+        aria-describedby="contentFileHelp" (change)="fileChangeEvent($event)">
+      <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
+    </div>
+
+    <div class="form-group">
+      <label for="dataPass">Password:</label>
+      <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="this['dataPass' + copayer]">
+    </div>
+
+    <div class="form-group">
+      <label for="dataPassX">Encrypted private key password (in case you have one):</label>
+      <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="this['dataPassX' + copayer]">
+    </div>
+
+  </div>
+
+  <button type="submit" [disabled]="!processInputsForm.form.valid" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
+
+</form>
+
+</div>
