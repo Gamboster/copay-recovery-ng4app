@@ -42,13 +42,24 @@ export class AppComponent implements OnInit {
       return i;
     });
 
-    this.RecoveryService.prueba(this.dataBackUp1);
+    /*var wallet = ;
+    var gap = 20;
+    var reportFn = function(data) {
+      console.log('Report:', data);
+    };
+    this.RecoveryService.scanWallet(wallet, gap, reportFn, function(err, res){
+      console.log("Exito!", res);
+      if (err) {
+        console.log("Error :C", err);
+      }
+    });*/
 
     console.log("Copayers", this.copayers);
   }
 
   processInputs() {
     console.log("processInputs!");
+    this.RecoveryService.prueba(this.dataBackUp1);
   }
 
 }

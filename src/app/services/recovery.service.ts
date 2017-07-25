@@ -14,19 +14,7 @@ export class RecoveryService {
 
   public PATHS: Object;
 
-  constructor(private http: HttpClient) { }
-
-  prueba(dataBackUp: any) {
-    console.log(this.fromBackup({backup: dataBackUp, password: "1"}, 1, 1, "testnet"));
-    console.log(this.fromMnemonic({backup: "bundle truck place meadow hobby prize trial delay cost enact taxi alert"}, 1, 1, "livenet"));
-    var buildWallet = this.fromMnemonic({backup: "bundle truck place meadow hobby prize trial delay cost enact taxi alert"}, 1, 1, "livenet");
-    console.log("buildWallet", this.buildWallet([buildWallet, buildWallet]));
-    console.log("PRUEBA-------------");
-    var privateKey = new bitcore.PrivateKey();
-    console.log("privateKey", privateKey);
-    var code = new Mnemonic();
-    console.log("code", code);
-    console.log("Transaction", this.Transaction);
+  constructor(private http: HttpClient) {
     this.PATHS = {
       'BIP45': ["m/45'/2147483647/0", "m/45'/2147483647/1"],
       'BIP44': {
@@ -34,6 +22,26 @@ export class RecoveryService {
         'livenet': ["m/44'/0'/0'/0", "m/44'/0'/0'/1"]
       },
     }
+  }
+
+  prueba(dataBackUp1: any) {
+    console.log(this.fromBackup({backup: dataBackUp1, password: "1"}, 1, 1, "testnet"));
+    console.log(this.fromMnemonic({backup: "bundle truck place meadow hobby prize trial delay cost enact taxi alert"}, 1, 1, "livenet"));
+    var credentials1 = this.fromMnemonic({backup: "better gorilla chuckle goose orbit unique famous agree topple diary once pond"}, 1, 1, "testnet");
+    //var credentials2 = this.fromMnemonic({backup: "twist piano marble use mobile detect quote client regular time air best"}, 1, 2, "testnet");
+    console.log("credentials", credentials1);
+    var wallet = this.buildWallet([credentials1]);
+    console.log("PRUEBA-------------", wallet);
+
+    var reportFn = function(data) {
+      console.log('Report:', data);
+    };
+    this.scanWallet(wallet, 20, reportFn, (err, res) => {
+      console.log("Exito!", res);
+      if (err) {
+        console.log("Error :C", err);
+      }
+    });
   }
 
   fromBackup(data: any, m: number, n: number, network: string) {
@@ -124,7 +132,7 @@ export class RecoveryService {
 
     result = _.pick(credentials[0], ["walletId", "derivationStrategy", "addressType", "m", "n", "network", "from"]);
 
-    result.copayers = _.map(credentials, function(c: any) {
+    result.copayers = _.map(credentials, (c: any) => {
       if (c.walletId != result.walletId)
         throw new Error("Backups do not belong to the same wallets.");
       return {
@@ -143,7 +151,7 @@ export class RecoveryService {
   }
 
   getWallet(data: any, m: number, n: number, network: string) {
-    var credentials = _.map(data, function(dataItem: any) {
+    var credentials = _.map(data, (dataItem: any) => {
       if (dataItem.backup.charAt(0) == '{')
         return this.fromBackup(dataItem, m, n, network);
       else
@@ -153,17 +161,18 @@ export class RecoveryService {
   }
 
   scanWallet(wallet: any, inGap: number, reportFn: Function, cb: Function) {
+    //debugger;
     var utxos: Array<any>;
     reportFn("Getting addresses... GAP:" + inGap);
 
     // getting main addresses
-    this.getActiveAddresses(wallet, inGap, reportFn, function(err, addresses) {
+    this.getActiveAddresses(wallet, inGap, reportFn, (err, addresses) => {
       reportFn("Active addresses:" + JSON.stringify(addresses));
       if (err) return cb(err);
-      this.utxos = _.flatten(_.map(addresses, "utxo"));
+      utxos = _.flatten(_.map(addresses, "utxo"));
       var result = {
         addresses: addresses,
-        balance: _.sumBy(this.utxos, 'amount'),
+        balance: _.sumBy(utxos, 'amount'),
       }
       return cb(null, result);
     });
@@ -184,6 +193,7 @@ export class RecoveryService {
     };
 
     function expand(groups) {
+      console.log("groups", groups);
       if (groups.length == 1) return groups[0];
 
       function combine(g1, g2) {
@@ -201,8 +211,8 @@ export class RecoveryService {
 
     var xPrivKeys = _.map(wallet.copayers, 'xPriv');
     var derivations = [];
-    _.each(this.getPaths(wallet), function(path) {
-      var derivation = expand(_.map(xPrivKeys, function(xpriv, i) {
+    _.each(this.getPaths(wallet), (path) => {
+      var derivation = expand(_.map(xPrivKeys, (xpriv, i) => {
         var compliant = deriveOne(xpriv, path, true);
         var nonCompliant = deriveOne(xpriv, path, false);
         var items = [];
@@ -229,6 +239,7 @@ export class RecoveryService {
   };
 
   getActiveAddresses(wallet: any, inGap: number, reportFn: Function, cb: Function) {
+    let self = this;
     var activeAddress = [];
     var inactiveCount;
 
@@ -237,7 +248,7 @@ export class RecoveryService {
     function exploreDerivation(i) {
       if (i >= baseDerivations.length) return cb(null, activeAddress);
       inactiveCount = 0;
-      derive(baseDerivations[i], 0, function(err, addresses) {
+      derive(baseDerivations[i], 0, (err, addresses) => {
         if (err) return cb(err);
         exploreDerivation(i + 1);
       });
@@ -246,8 +257,8 @@ export class RecoveryService {
     function derive(baseDerivation, index, cb) {
       if (inactiveCount > inGap) return cb();
 
-      var address = this.generateAddress(wallet, baseDerivation, index);
-      this.getAddressData(address, wallet.network, function(err, addressData) {
+      var address = self.generateAddress(wallet, baseDerivation, index);
+      self.getAddressData(address, wallet.network, (err, addressData) => {
         if (err) return cb(err);
 
         if (!_.isEmpty(addressData)) {
@@ -269,7 +280,7 @@ export class RecoveryService {
     var derivedPrivateKeys = [];
     var derivedPublicKeys = [];
 
-    _.each([].concat(derivedItems), function(item) {
+    _.each([].concat(derivedItems), (item) => {
       var hdPrivateKey = bitcore.HDPrivateKey(item.key);
 
       // private key derivation
@@ -297,31 +308,62 @@ export class RecoveryService {
   }
 
   getAddressData(address:any, network:string, cb: Function) {
+    let self = this;
     // call insight API to get address information
-    this.checkAddress(address.addressObject, network).then(function(respAddress) {
-      // call insight API to get utxo information
-      this.checkUtxos(address.addressObject, network).then(function(respUtxo) {
-        var addressData = {
-          address: respAddress.data.addrStr,
-          balance: respAddress.data.balance,
-          unconfirmedBalance: respAddress.data.unconfirmedBalance,
-          utxo: respUtxo.data,
-          privKeys: address.privKeys,
-          pubKeys: address.pubKeys,
-          info: address.info,
-          index: address.index,
-          isActive: respAddress.data.unconfirmedTxApperances + respAddress.data.txApperances > 0,
-        };
-        // TODO: Review this comment
-        //$rootScope.$emit('progress', _.pick(addressData, 'info', 'address', 'isActive', 'balance'));
-        if (addressData.isActive)
-          return cb(null, addressData);
-        return cb();
+    this.checkAddress(address.addressObject, network).then((respAddressObs: any) => {
+      console.log("respAddress", respAddressObs);
+      respAddressObs.subscribe(respAddress => {
+        console.log("datadatadatadatadata", respAddress);
+        // call insight API to get utxo information
+        self.checkUtxos(address.addressObject, network).then((respUtxo: any) => {
+          var addressData = {
+            address: respAddress.addrStr,
+            balance: respAddress.balance,
+            unconfirmedBalance: respAddress.unconfirmedBalance,
+            utxo: respUtxo.data,
+            privKeys: address.privKeys,
+            pubKeys: address.pubKeys,
+            info: address.info,
+            index: address.index,
+            isActive: respAddress.unconfirmedTxApperances + respAddress.txApperances > 0,
+          };
+          // TODO: Review this comment
+          //$rootScope.$emit('progress', _.pick(addressData, 'info', 'address', 'isActive', 'balance'));
+          if (addressData.isActive)
+            return cb(null, addressData);
+          return cb();
+        });
       });
     });
   }
 
-  checkAddress(address: string, network: string) {
+  checkAddress(address: string, network: string): Promise<any> {
+    if (network == 'testnet')
+    {
+      return new Promise (resolve => {
+        resolve(this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '?noTxList=1'));
+      });
+    } else {
+      return new Promise (resolve => {
+        resolve(this.http.get('https://insight.bitpay.com/api/addr/' + address + '?noTxList=1'));
+      });
+    }
+  }
+
+  checkUtxos(address: string, network: string): Promise<any> {
+    if (network == 'testnet')
+    {
+      return new Promise (resolve => {
+        resolve(this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1'));
+      });
+    } else {
+      return new Promise (resolve => {
+        resolve(this.http.get('https://insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1'));
+      });
+    }
+  }
+
+  /*checkAddress(address: string, network: string) {
     if (network == 'testnet')
       return this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '?noTxList=1');
     else
@@ -333,7 +375,7 @@ export class RecoveryService {
       return this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1');
     else
       return this.http.get('https://insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1');
-  }
+  }*/
 
   createRawTx(toAddress: string, scanResults: any, wallet: any, fee: number) {
     if (!toAddress || !this.Address.isValid(toAddress))
@@ -353,9 +395,9 @@ export class RecoveryService {
     try {
       var privKeys = [];
       var tx = new this.Transaction();
-      _.each(scanResults.addresses, function(address) {
+      _.each(scanResults.addresses, (address) => {
         if (address.utxo.length > 0) {
-          _.each(address.utxo, function(u) {
+          _.each(address.utxo, (u) => {
             if (wallet.addressType == 'P2SH')
               tx.from(u, address.pubKeys, wallet.m);
             else
@@ -377,6 +419,7 @@ export class RecoveryService {
     }
   }
 
+  // Todo: implement txBroadcast as a Promise
   txBroadcast(rawTx: string, network: string) {
     if (network == 'testnet')
       return this.http.post('https://test-insight.bitpay.com/api/tx/send', {
