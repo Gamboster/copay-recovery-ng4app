@@ -4,7 +4,7 @@ import * as sjcl from 'sjcl';
 import * as bitcore from 'bitcore-lib';
 import * as Mnemonic from 'bitcore-mnemonic';
 import * as _ from 'lodash';
-import {HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable()
 export class RecoveryService {
@@ -25,15 +25,15 @@ export class RecoveryService {
   }
 
   prueba(dataBackUp1: any) {
-    console.log(this.fromBackup({backup: dataBackUp1, password: "1"}, 1, 1, "testnet"));
-    console.log(this.fromMnemonic({backup: "bundle truck place meadow hobby prize trial delay cost enact taxi alert"}, 1, 1, "livenet"));
-    var credentials1 = this.fromMnemonic({backup: "better gorilla chuckle goose orbit unique famous agree topple diary once pond"}, 1, 1, "testnet");
+    console.log(this.fromBackup({ backup: dataBackUp1, password: "1" }, 1, 1, "testnet"));
+    console.log(this.fromMnemonic({ backup: "bundle truck place meadow hobby prize trial delay cost enact taxi alert" }, 1, 1, "livenet"));
+    var credentials1 = this.fromMnemonic({ backup: "better gorilla chuckle goose orbit unique famous agree topple diary once pond" }, 1, 1, "testnet");
     //var credentials2 = this.fromMnemonic({backup: "twist piano marble use mobile detect quote client regular time air best"}, 1, 2, "testnet");
     console.log("credentials", credentials1);
     var wallet = this.buildWallet([credentials1]);
     console.log("PRUEBA-------------", wallet);
 
-    var reportFn = function(data) {
+    var reportFn = function (data) {
       console.log('Report:', data);
     };
     this.scanWallet(wallet, 20, reportFn, (err, res) => {
@@ -161,7 +161,6 @@ export class RecoveryService {
   }
 
   scanWallet(wallet: any, inGap: number, reportFn: Function, cb: Function) {
-    //debugger;
     var utxos: Array<any>;
     reportFn("Getting addresses... GAP:" + inGap);
 
@@ -193,7 +192,6 @@ export class RecoveryService {
     };
 
     function expand(groups) {
-      console.log("groups", groups);
       if (groups.length == 1) return groups[0];
 
       function combine(g1, g2) {
@@ -205,7 +203,6 @@ export class RecoveryService {
         };
         return combinations;
       };
-
       return combine(groups[0], expand(_.tail(groups)));
     };
 
@@ -307,57 +304,55 @@ export class RecoveryService {
     };
   }
 
-  getAddressData(address:any, network:string, cb: Function) {
+  getAddressData(address: any, network: string, cb: Function) {
     let self = this;
     // call insight API to get address information
     this.checkAddress(address.addressObject, network).then((respAddressObs: any) => {
-      console.log("respAddress", respAddressObs);
       respAddressObs.subscribe(respAddress => {
-        console.log("datadatadatadatadata", respAddress);
         // call insight API to get utxo information
         self.checkUtxos(address.addressObject, network).then((respUtxo: any) => {
-          var addressData = {
-            address: respAddress.addrStr,
-            balance: respAddress.balance,
-            unconfirmedBalance: respAddress.unconfirmedBalance,
-            utxo: respUtxo.data,
-            privKeys: address.privKeys,
-            pubKeys: address.pubKeys,
-            info: address.info,
-            index: address.index,
-            isActive: respAddress.unconfirmedTxApperances + respAddress.txApperances > 0,
-          };
-          // TODO: Review this comment
-          //$rootScope.$emit('progress', _.pick(addressData, 'info', 'address', 'isActive', 'balance'));
-          if (addressData.isActive)
-            return cb(null, addressData);
-          return cb();
+          respUtxo.subscribe(respUtxoData => {
+            var addressData = {
+              address: respAddress.addrStr,
+              balance: respAddress.balance,
+              unconfirmedBalance: respAddress.unconfirmedBalance,
+              utxo: respUtxoData,
+              privKeys: address.privKeys,
+              pubKeys: address.pubKeys,
+              info: address.info,
+              index: address.index,
+              isActive: respAddress.unconfirmedTxApperances + respAddress.txApperances > 0,
+            };
+            // TODO: Review this comment
+            //$rootScope.$emit('progress', _.pick(addressData, 'info', 'address', 'isActive', 'balance'));
+            if (addressData.isActive)
+              return cb(null, addressData);
+            return cb();
+          });
         });
       });
     });
   }
 
   checkAddress(address: string, network: string): Promise<any> {
-    if (network == 'testnet')
-    {
-      return new Promise (resolve => {
+    if (network == 'testnet') {
+      return new Promise(resolve => {
         resolve(this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '?noTxList=1'));
       });
     } else {
-      return new Promise (resolve => {
+      return new Promise(resolve => {
         resolve(this.http.get('https://insight.bitpay.com/api/addr/' + address + '?noTxList=1'));
       });
     }
   }
 
   checkUtxos(address: string, network: string): Promise<any> {
-    if (network == 'testnet')
-    {
-      return new Promise (resolve => {
+    if (network == 'testnet') {
+      return new Promise(resolve => {
         resolve(this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1'));
       });
     } else {
-      return new Promise (resolve => {
+      return new Promise(resolve => {
         resolve(this.http.get('https://insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1'));
       });
     }
@@ -421,14 +416,19 @@ export class RecoveryService {
 
   // Todo: implement txBroadcast as a Promise
   txBroadcast(rawTx: string, network: string) {
-    if (network == 'testnet')
-      return this.http.post('https://test-insight.bitpay.com/api/tx/send', {
-        rawtx: rawTx
+    if (network == 'testnet') {
+      return new Promise(resolve => {
+        resolve(this.http.post('https://test-insight.bitpay.com/api/tx/send', {
+          rawtx: rawTx
+        }));
       });
-    else
-      return this.http.post('https://insight.bitpay.com/api/tx/send', {
-        rawtx: rawTx
+    } else {
+      return new Promise(resolve => {
+        resolve(this.http.post('https://insight.bitpay.com/api/tx/send', {
+          rawtx: rawTx
+        }));
       });
+    }
   }
 
 }

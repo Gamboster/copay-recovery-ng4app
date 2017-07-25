@@ -1,61 +1,61 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <div class="container">
 
-<h2>WALLET CONFIGURATION</h2>
-<form #processInputsForm="ngForm" (ngSubmit)="processInputs()">
-  <div class="form-group">
-    <label for="signaturesNumber">Required number of signatures</label>
-    <select class="form-control" id="signaturesNumber" name="signaturesNumber" [(ngModel)]="signaturesNumber">
+  <h2>WALLET CONFIGURATION</h2>
+  <form #processInputsForm="ngForm" (ngSubmit)="processInputs()">
+    <div class="form-group">
+      <label for="signaturesNumber">Required number of signatures</label>
+      <select class="form-control" id="signaturesNumber" name="signaturesNumber" [(ngModel)]="signaturesNumber">
       <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
     </select>
-  </div>
+    </div>
 
-  <div class="form-group">
-    <label for="copayersNumber">Total number of Copayers</label>
-    <select class="form-control" id="copayersNumber" name="copayersNumber" [(ngModel)]="copayersNumber" (ngModelChange)="updateCopayersForm($event)">
+    <div class="form-group">
+      <label for="copayersNumber">Total number of Copayers</label>
+      <select class="form-control" id="copayersNumber" name="copayersNumber" [(ngModel)]="copayersNumber" (ngModelChange)="updateCopayersForm($event)">
       <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
     </select>
-  </div>
+    </div>
 
-  <div class="form-group">
-    <label for="network">Network</label>
-    <select class="form-control" id="network" name="network" [(ngModel)]="network">
+    <div class="form-group">
+      <label for="network">Network</label>
+      <select class="form-control" id="network" name="network" [(ngModel)]="network">
       <option *ngFor="let network of availableNetworks" [ngValue]="network">{{network}}</option>
     </select>
-  </div>
-
-  <div class="form-group">
-    <label for="addressGap">Address Gap</label><span> (Usually does not need to be changed)</span>
-    <input type="number" class="form-control" id="addressGap" name="addressGap" [(ngModel)]="addressGap" required>
-  </div>
-
-  <div *ngFor="let copayer of copayers">
-    <div class="form-group">
-      <label for="dataBackUp">Backup for copayer {{copayer}}:</label>
-      <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="this['dataBackUp' + copayer]" placeholder="Mnemonic or exported wallet data">
     </div>
 
     <div class="form-group">
-      <label for="contentFile">Or upload a file:</label>
-      <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt"
-        aria-describedby="contentFileHelp" (change)="fileChangeEvent($event)">
-      <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
+      <label for="addressGap">Address Gap</label><span> (Usually does not need to be changed)</span>
+      <input type="number" class="form-control" id="addressGap" name="addressGap" [(ngModel)]="addressGap" required>
     </div>
 
-    <div class="form-group">
-      <label for="dataPass">Password:</label>
-      <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="this['dataPass' + copayer]">
+    <div *ngFor="let copayer of copayers">
+      <div class="form-group">
+        <label for="dataBackUp">Backup for copayer {{copayer}}:</label>
+        <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="data.backUp[copayer]" placeholder="Mnemonic or exported wallet data">
+      </div>
+
+      <div class="form-group">
+        <label for="contentFile">Or upload a file:</label>
+        <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt" aria-describedby="contentFileHelp"
+          (change)="fileChangeEvent($event)">
+        <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
+      </div>
+
+      <div class="form-group">
+        <label for="dataPass">Password:</label>
+        <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="this['dataPass' + copayer]">
+      </div>
+
+      <div class="form-group">
+        <label for="dataPassX">Encrypted private key password (in case you have one):</label>
+        <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="this['dataPassX' + copayer]">
+      </div>
+
     </div>
 
-    <div class="form-group">
-      <label for="dataPassX">Encrypted private key password (in case you have one):</label>
-      <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="this['dataPassX' + copayer]">
-    </div>
+    <button type="submit" [disabled]="!processInputsForm.form.valid" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
 
-  </div>
-
-  <button type="submit" [disabled]="!processInputsForm.form.valid" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
-
-</form>
+  </form>
 
 </div>
