@@ -4,6 +4,7 @@ import * as sjcl from 'sjcl';
 import * as bitcore from 'bitcore-lib';
 import * as Mnemonic from 'bitcore-mnemonic';
 import * as _ from 'lodash';
+import {HttpClient} from '@angular/common/http';
 
 @Injectable()
 export class RecoveryService {
@@ -11,7 +12,9 @@ export class RecoveryService {
   public Transaction = bitcore.Transaction;
   public Address = bitcore.Address;
 
-  constructor() { }
+  public PATHS: Object;
+
+  constructor(private http: HttpClient) { }
 
   prueba(dataBackUp: any) {
     console.log(this.fromBackup({backup: dataBackUp, password: "1"}, 1, 1, "testnet"));
@@ -24,6 +27,13 @@ export class RecoveryService {
     var code = new Mnemonic();
     console.log("code", code);
     console.log("Transaction", this.Transaction);
+    this.PATHS = {
+      'BIP45': ["m/45'/2147483647/0", "m/45'/2147483647/1"],
+      'BIP44': {
+        'testnet': ["m/44'/1'/0'/0", "m/44'/1'/0'/1"],
+        'livenet': ["m/44'/0'/0'/0", "m/44'/0'/0'/1"]
+      },
+    }
   }
 
   fromBackup(data: any, m: number, n: number, network: string) {
@@ -130,6 +140,252 @@ export class RecoveryService {
     console.log('Recovering wallet', result);
 
     return result;
+  }
+
+  getWallet(data: any, m: number, n: number, network: string) {
+    var credentials = _.map(data, function(dataItem: any) {
+      if (dataItem.backup.charAt(0) == '{')
+        return this.fromBackup(dataItem, m, n, network);
+      else
+        return this.fromMnemonic(dataItem, m, n, network);
+    });
+    return this.buildWallet(credentials);
+  }
+
+  scanWallet(wallet: any, inGap: number, reportFn: Function, cb: Function) {
+    var utxos: Array<any>;
+    reportFn("Getting addresses... GAP:" + inGap);
+
+    // getting main addresses
+    this.getActiveAddresses(wallet, inGap, reportFn, function(err, addresses) {
+      reportFn("Active addresses:" + JSON.stringify(addresses));
+      if (err) return cb(err);
+      this.utxos = _.flatten(_.map(addresses, "utxo"));
+      var result = {
+        addresses: addresses,
+        balance: _.sumBy(this.utxos, 'amount'),
+      }
+      return cb(null, result);
+    });
+  }
+
+  getPaths(wallet: any) {
+    if (wallet.derivationStrategy == 'BIP45')
+      return this.PATHS[wallet.derivationStrategy];
+    if (wallet.derivationStrategy == 'BIP44')
+      return this.PATHS[wallet.derivationStrategy][wallet.network];
+  };
+
+  getHdDerivations(wallet: any) {
+    function deriveOne(xpriv, path, compliant) {
+      var hdPrivateKey = bitcore.HDPrivateKey(xpriv);
+      var xPrivKey = compliant ? hdPrivateKey.deriveChild(path) : hdPrivateKey.deriveNonCompliantChild(path);
+      return xPrivKey;
+    };
+
+    function expand(groups) {
+      if (groups.length == 1) return groups[0];
+
+      function combine(g1, g2) {
+        var combinations = [];
+        for (var i = 0; i < g1.length; i++) {
+          for (var j = 0; j < g2.length; j++) {
+            combinations.push(_.flatten([g1[i], g2[j]]));
+          };
+        };
+        return combinations;
+      };
+
+      return combine(groups[0], expand(_.tail(groups)));
+    };
+
+    var xPrivKeys = _.map(wallet.copayers, 'xPriv');
+    var derivations = [];
+    _.each(this.getPaths(wallet), function(path) {
+      var derivation = expand(_.map(xPrivKeys, function(xpriv, i) {
+        var compliant = deriveOne(xpriv, path, true);
+        var nonCompliant = deriveOne(xpriv, path, false);
+        var items = [];
+        items.push({
+          copayer: i + 1,
+          path: path,
+          compliant: true,
+          key: compliant
+        });
+        if (compliant.toString() != nonCompliant.toString()) {
+          items.push({
+            copayer: i + 1,
+            path: path,
+            compliant: false,
+            key: nonCompliant
+          });
+        }
+        return items;
+      }));
+      derivations = derivations.concat(derivation);
+    });
+
+    return derivations;
+  };
+
+  getActiveAddresses(wallet: any, inGap: number, reportFn: Function, cb: Function) {
+    var activeAddress = [];
+    var inactiveCount;
+
+    var baseDerivations = this.getHdDerivations(wallet);
+
+    function exploreDerivation(i) {
+      if (i >= baseDerivations.length) return cb(null, activeAddress);
+      inactiveCount = 0;
+      derive(baseDerivations[i], 0, function(err, addresses) {
+        if (err) return cb(err);
+        exploreDerivation(i + 1);
+      });
+    }
+
+    function derive(baseDerivation, index, cb) {
+      if (inactiveCount > inGap) return cb();
+
+      var address = this.generateAddress(wallet, baseDerivation, index);
+      this.getAddressData(address, wallet.network, function(err, addressData) {
+        if (err) return cb(err);
+
+        if (!_.isEmpty(addressData)) {
+          reportFn('Address is Active!');
+          activeAddress.push(addressData);
+          inactiveCount = 0;
+        } else
+          inactiveCount++;
+
+        reportFn('inactiveCount:' + inactiveCount);
+
+        derive(baseDerivation, index + 1, cb);
+      });
+    }
+    exploreDerivation(0);
+  }
+
+  generateAddress(wallet: any, derivedItems: any, index: number) {
+    var derivedPrivateKeys = [];
+    var derivedPublicKeys = [];
+
+    _.each([].concat(derivedItems), function(item) {
+      var hdPrivateKey = bitcore.HDPrivateKey(item.key);
+
+      // private key derivation
+      var derivedPrivateKey = hdPrivateKey.deriveChild(index).privateKey;
+      derivedPrivateKeys.push(derivedPrivateKey);
+
+      // public key derivation
+      derivedPublicKeys.push(derivedPrivateKey.publicKey);
+    });
+
+    var address;
+    if (wallet.addressType == "P2SH")
+      address = bitcore.Address.createMultisig(derivedPublicKeys, wallet.m, wallet.network);
+    else if (wallet.addressType == "P2PKH")
+      address = this.Address.fromPublicKey(derivedPublicKeys[0], wallet.network);
+    else
+      throw new Error('Address type not supported');
+    return {
+      addressObject: address,
+      pubKeys: derivedPublicKeys,
+      privKeys: derivedPrivateKeys,
+      info: derivedItems,
+      index: index,
+    };
+  }
+
+  getAddressData(address:any, network:string, cb: Function) {
+    // call insight API to get address information
+    this.checkAddress(address.addressObject, network).then(function(respAddress) {
+      // call insight API to get utxo information
+      this.checkUtxos(address.addressObject, network).then(function(respUtxo) {
+        var addressData = {
+          address: respAddress.data.addrStr,
+          balance: respAddress.data.balance,
+          unconfirmedBalance: respAddress.data.unconfirmedBalance,
+          utxo: respUtxo.data,
+          privKeys: address.privKeys,
+          pubKeys: address.pubKeys,
+          info: address.info,
+          index: address.index,
+          isActive: respAddress.data.unconfirmedTxApperances + respAddress.data.txApperances > 0,
+        };
+        // TODO: Review this comment
+        //$rootScope.$emit('progress', _.pick(addressData, 'info', 'address', 'isActive', 'balance'));
+        if (addressData.isActive)
+          return cb(null, addressData);
+        return cb();
+      });
+    });
+  }
+
+  checkAddress(address: string, network: string) {
+    if (network == 'testnet')
+      return this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '?noTxList=1');
+    else
+      return this.http.get('https://insight.bitpay.com/api/addr/' + address + '?noTxList=1');
+  }
+
+  checkUtxos(address: string, network: string) {
+    if (network == 'testnet')
+      return this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1');
+    else
+      return this.http.get('https://insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1');
+  }
+
+  createRawTx(toAddress: string, scanResults: any, wallet: any, fee: number) {
+    if (!toAddress || !this.Address.isValid(toAddress))
+      throw new Error('Please enter a valid address.');
+
+    var amount = parseInt((scanResults.balance * 1e8 - fee * 1e8).toFixed(0));
+
+    if (amount <= 0)
+      throw new Error('Funds are insufficient to complete the transaction');
+
+    try {
+      new this.Address(toAddress, wallet.network);
+    } catch (ex) {
+      throw new Error('Incorrect destination address network');
+    }
+
+    try {
+      var privKeys = [];
+      var tx = new this.Transaction();
+      _.each(scanResults.addresses, function(address) {
+        if (address.utxo.length > 0) {
+          _.each(address.utxo, function(u) {
+            if (wallet.addressType == 'P2SH')
+              tx.from(u, address.pubKeys, wallet.m);
+            else
+              tx.from(u);
+            privKeys = privKeys.concat(address.privKeys.slice(0, wallet.m));
+
+          });
+        }
+      });
+      tx.to(toAddress, amount);
+      tx.sign(_.uniq(privKeys));
+
+      var rawTx = tx.serialize();
+      console.log("Raw transaction: ", rawTx);
+      return rawTx;
+    } catch (ex) {
+      console.log(ex);
+      throw new Error('Could not build tx: ' + ex);
+    }
+  }
+
+  txBroadcast(rawTx: string, network: string) {
+    if (network == 'testnet')
+      return this.http.post('https://test-insight.bitpay.com/api/tx/send', {
+        rawtx: rawTx
+      });
+    else
+      return this.http.post('https://insight.bitpay.com/api/tx/send', {
+        rawtx: rawTx
+      });
   }
 
 }
