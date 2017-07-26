@@ -8,26 +8,22 @@ import { RecoveryService } from '../app/services/recovery.service';
   styleUrls: ['./app.component.scss'],
   providers: [RecoveryService]
 })
-export class AppComponent implements OnInit {
 
+export class AppComponent implements OnInit {
   public availableOptions: Array<any>;
   public availableNetworks: Array<any>;
-
   public signaturesNumber: number; //m
   public copayersNumber: number; //n
   public network: string; //net
   public addressGap: number;
   public beforeScan: boolean;
-
   public copayers = [1];
-
-  public dataBackUp1: any;
   public data: any;
-
   public statusMessage: string;
   public successMessage: string;
   public errorMessage: string;
   public totalBalance: any;
+  public destinationAddress: string;
 
   private wallet: any;
   private scanResults: any;
@@ -37,8 +33,8 @@ export class AppComponent implements OnInit {
     this.addressGap = 20;
     this.data = {
       backUp: [],
-      passX: [],
       pass: [],
+      passX: [],
       gap: this.addressGap
     };
     this.availableOptions = [1, 2, 3, 4, 5, 6];
@@ -50,12 +46,12 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.dataBackUp1 = "better gorilla chuckle goose orbit unique famous agree topple diary once pond";
     this.beforeScan = true;
+    this.destinationAddress = '';
   }
 
   updateCopayersForm() {
-    this.copayers = _.map(_.range(1, this.copayersNumber + 1), function (i) {
+    this.copayers = _.map(_.range(1, this.copayersNumber + 1), function(i) {
       return i;
     });
   }
@@ -65,7 +61,7 @@ export class AppComponent implements OnInit {
     //$("#myModal").modal('show');
     this.beforeScan = true;
 
-    var inputs = _.map(_.range(1, this.copayersNumber + 1), function (i) {
+    var inputs = _.map(_.range(1, this.copayersNumber + 1), function(i) {
       return {
         backup: self.data.backUp[i] || '',
         password: self.data.pass[i] || '',
@@ -81,45 +77,46 @@ export class AppComponent implements OnInit {
     }
     this.showMessage('Scanning funds...', 1);
 
-    var reportFn = function (data) {
+    var reportFn = function(data) {
       console.log('Report:', data);
     };
 
-    var gap = +this.data.gap;
+    var gap = +this.addressGap;
     gap = gap ? gap : 20;
 
     this.RecoveryService.scanWallet(this.wallet, gap, reportFn, (err, res) => {
+      if (err) return this.showMessage(err, 3);
+
       this.scanResults = res;
-      if (err)
-        return this.showMessage(err, 3);
+      console.log('## Total balance:', this.scanResults.balance.toFixed(8) + ' BTC');
 
       this.showMessage('Search completed', 2);
       //$("#myModal").modal('hide');
       this.beforeScan = false;
-      if ((this.scanResults.balance - this.fee) > 0)
-        this.totalBalance = "Available balance: " + this.scanResults.balance.toFixed(8) + " BTC";
-      else
-        this.totalBalance = "Available balance: " + this.scanResults.balance.toFixed(8) + " BTC. Insufficents funds.";
+      this.totalBalance = "Available balance: " + this.scanResults.balance.toFixed(8) + ' BTC';
+      if ((this.scanResults.balance - this.fee) <= 0)
+        this.totalBalance += ". Insufficents funds.";
     });
   }
 
-  sendFunds(addr: string) {
-    var toAddress = addr;
+  sendFunds(destinationAddress: string) {
     var rawTx;
 
     try {
-      rawTx = this.RecoveryService.createRawTx(toAddress, this.scanResults, this.wallet, this.fee);
+      rawTx = this.RecoveryService.createRawTx(destinationAddress, this.scanResults, this.wallet, this.fee);
     } catch (ex) {
       return this.showMessage(ex.message, 3);
     }
 
-    this.RecoveryService.txBroadcast(rawTx, this.network).then((response) => {
-      this.showMessage((this.scanResults.balance - this.fee).toFixed(8) + ' BTC sent to address: ' + toAddress, 2);
-      console.log('Transaction complete.  ' + (this.scanResults.balance - this.fee) + ' BTC sent to address: ' + toAddress);
-    },
-      function (error) {
-        this.showMessage('Could not broadcast transaction. Please, try later.', 3);
+    this.RecoveryService.txBroadcast(rawTx, this.network).then((response: any) => {
+      response.subscribe(resp => {
+        this.showMessage((this.scanResults.balance - this.fee).toFixed(8) + ' BTC sent to address: ' + destinationAddress, 2);
+        console.log('Transaction complete. ' + (this.scanResults.balance - this.fee) + ' BTC sent to address: ' + destinationAddress);
       });
+      // TODO check error cases
+    }, function(error) {
+      this.showMessage('Could not broadcast transaction. Please, try later.', 3);
+    });
   };
 
   showMessage(message: string, type: number) {

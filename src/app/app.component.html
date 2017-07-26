@@ -2,7 +2,8 @@
 <div class="container">
 
   <h2>WALLET CONFIGURATION</h2>
-  <form #processInputsForm="ngForm" (ngSubmit)="processInputs()">
+
+  <form #processInputsForm="ngForm" (ngSubmit)="processInputs()" *ngIf="beforeScan">
     <div class="form-group">
       <label for="signaturesNumber">Required number of signatures</label>
       <select class="form-control" id="signaturesNumber" name="signaturesNumber" [(ngModel)]="signaturesNumber">
@@ -44,18 +45,27 @@
 
       <div class="form-group">
         <label for="dataPass">Password:</label>
-        <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="this['dataPass' + copayer]">
+        <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="data.pass[copayer]">
       </div>
 
       <div class="form-group">
         <label for="dataPassX">Encrypted private key password (in case you have one):</label>
-        <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="this['dataPassX' + copayer]">
+        <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="data.passX[copayer]">
       </div>
 
     </div>
 
     <button type="submit" [disabled]="!processInputsForm.form.valid" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
-
   </form>
 
+  <form #sendFundsForm="ngForm" (ngSubmit)="sendFunds(destinationAddress)" *ngIf="!beforeScan">
+    <div class="form-group panel">
+      <label>{{totalBalance}}</label>
+      <div class="input-group">
+        <div class="input-group-addon" >Destination Address:</div>
+        <input type="text" class="form-control" id="destinationAddress" name="destinationAddress" [(ngModel)]="destinationAddress">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block">Transfer</button>
+  </form>
 </div>

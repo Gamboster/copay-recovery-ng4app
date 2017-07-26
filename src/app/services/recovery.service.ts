@@ -33,7 +33,7 @@ export class RecoveryService {
     var wallet = this.buildWallet([credentials1]);
     console.log("PRUEBA-------------", wallet);
 
-    var reportFn = function (data) {
+    var reportFn = function(data) {
       console.log('Report:', data);
     };
     this.scanWallet(wallet, 20, reportFn, (err, res) => {
@@ -50,7 +50,7 @@ export class RecoveryService {
     try {
       JSON.parse(data.backup);
     } catch (ex) {
-      throw new Error("Your JSON is not valid, please copy only the text within (and including) the { } brackets around it.");
+      throw new Error("JSON invalid. Please copy only the text within (and including) the { } brackets around it.");
     };
     var payload;
     try {
@@ -260,6 +260,7 @@ export class RecoveryService {
 
         if (!_.isEmpty(addressData)) {
           reportFn('Address is Active!');
+          console.log('#Active address:', addressData);
           activeAddress.push(addressData);
           inactiveCount = 0;
         } else
@@ -357,20 +358,6 @@ export class RecoveryService {
       });
     }
   }
-
-  /*checkAddress(address: string, network: string) {
-    if (network == 'testnet')
-      return this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '?noTxList=1');
-    else
-      return this.http.get('https://insight.bitpay.com/api/addr/' + address + '?noTxList=1');
-  }
-
-  checkUtxos(address: string, network: string) {
-    if (network == 'testnet')
-      return this.http.get('https://test-insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1');
-    else
-      return this.http.get('https://insight.bitpay.com/api/addr/' + address + '/utxo?noCache=1');
-  }*/
 
   createRawTx(toAddress: string, scanResults: any, wallet: any, fee: number) {
     if (!toAddress || !this.Address.isValid(toAddress))
