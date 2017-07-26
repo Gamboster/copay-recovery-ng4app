@@ -71,7 +71,7 @@
           <div class="form-group col-sm-6">
             <label for="contentFile">Or upload a file:</label>
             <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt" aria-describedby="contentFileHelp"
-              (change)="fileChangeEvent($event)">
+              (change)="fileChangeEvent($event, copayer)">
             <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
           </div>
         </div>
