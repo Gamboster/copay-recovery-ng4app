@@ -24,6 +24,7 @@ export class AppComponent implements OnInit {
   public errorMessage: string;
   public totalBalance: any;
   public destinationAddress: string;
+  public showLoadingSpinner: boolean;
 
   private wallet: any;
   private scanResults: any;
@@ -43,6 +44,10 @@ export class AppComponent implements OnInit {
     this.signaturesNumber = this.availableOptions[0];
     this.copayersNumber = this.availableOptions[0];
     this.network = this.availableNetworks[0];
+    this.statusMessage = null;
+    this.successMessage = null;
+    this.errorMessage = null;
+    this.showLoadingSpinner = false;
   }
 
   ngOnInit() {
@@ -51,17 +56,17 @@ export class AppComponent implements OnInit {
   }
 
   updateCopayersForm() {
-    this.copayers = _.map(_.range(1, this.copayersNumber + 1), function(i) {
+    this.copayers = _.map(_.range(1, this.copayersNumber + 1), function (i) {
       return i;
     });
   }
 
   processInputs() {
     let self = this;
-    //$("#myModal").modal('show');
+    this.showLoadingSpinner = true;
     this.beforeScan = true;
 
-    var inputs = _.map(_.range(1, this.copayersNumber + 1), function(i) {
+    var inputs = _.map(_.range(1, this.copayersNumber + 1), function (i) {
       return {
         backup: self.data.backUp[i] || '',
         password: self.data.pass[i] || '',
@@ -72,12 +77,12 @@ export class AppComponent implements OnInit {
     try {
       this.wallet = this.RecoveryService.getWallet(inputs, this.signaturesNumber, this.copayersNumber, this.network);
     } catch (ex) {
-      //$("#myModal").modal('hide');
+      this.showLoadingSpinner = false;
       return this.showMessage(ex.message, 3);
     }
     this.showMessage('Scanning funds...', 1);
 
-    var reportFn = function(data) {
+    var reportFn = function (data) {
       console.log('Report:', data);
     };
 
@@ -91,7 +96,7 @@ export class AppComponent implements OnInit {
       console.log('## Total balance:', this.scanResults.balance.toFixed(8) + ' BTC');
 
       this.showMessage('Search completed', 2);
-      //$("#myModal").modal('hide');
+      this.showLoadingSpinner = false;
       this.beforeScan = false;
       this.totalBalance = "Available balance: " + this.scanResults.balance.toFixed(8) + ' BTC';
       if ((this.scanResults.balance - this.fee) <= 0)
@@ -114,7 +119,7 @@ export class AppComponent implements OnInit {
         console.log('Transaction complete. ' + (this.scanResults.balance - this.fee) + ' BTC sent to address: ' + destinationAddress);
       });
       // TODO check error cases
-    }, function(error) {
+    }, function (error) {
       this.showMessage('Could not broadcast transaction. Please, try later.', 3);
     });
   };

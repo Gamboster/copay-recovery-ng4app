@@ -1,5 +1,23 @@
-<!--The content below is only a placeholder and can be replaced.-->
+<div class="header">
+  <div class="header-content">
+    <img class="bitpay-logo" src="assets/img/bitpay-logo-negative.svg" alt="Bitpay">
+    <div class="header-center">
+      <h3 class="header-title">Recovery Tool</h3>
+      <div class="repository-link">
+        <a href="https://github.com/bitpay/copay-recovery" target="blank">
+          <img src="assets/img/github.png" alt="Github">
+        </a>
+      </div>
+    </div>
+    <img class="copay-logo" src="assets/img/copay-logo-negative.svg" alt="Copay">
+  </div>
+</div>
+<div [hidden]="!showLoadingSpinner" class="no-clickable-background"></div>
 <div class="container">
+
+  <div [hidden]="!successMessage" class="alert alert-success">{{successMessage}}</div>
+  <div [hidden]="!errorMessage" class="alert alert-danger">{{errorMessage}}</div>
+  <div [hidden]="!statusMessage" class="alert alert-info">{{statusMessage}}</div>
 
   <form #processInputsForm="ngForm" (ngSubmit)="processInputs()" *ngIf="beforeScan">
 
@@ -65,18 +83,39 @@
       </div>
     </div>
 
-    <button type="submit" [disabled]="!processInputsForm.form.valid" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
+    <button type="submit" [disabled]="!processInputsForm.form.valid  || showLoadingSpinner" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
   </form>
 
   <form #sendFundsForm="ngForm" (ngSubmit)="sendFunds(destinationAddress)" *ngIf="!beforeScan">
-    <div class="form-group panel">
-      <label>{{totalBalance}}</label>
-      <div class="input-group">
-        <div class="input-group-addon">Destination Address:</div>
-        <input type="text" class="form-control" id="destinationAddress" name="destinationAddress" [(ngModel)]="destinationAddress"
-          required>
+    <div class="card">
+      <div class="card-block">
+        <h6 class="card-title">{{totalBalance}}</h6>
+        <div class="input-group">
+          <div class="input-group-addon">Destination Address:</div>
+          <input type="text" class="form-control" id="destinationAddress" name="destinationAddress" [(ngModel)]="destinationAddress"
+            required>
+        </div>
       </div>
     </div>
-    <button type="submit" [disabled]="!sendFundsForm.form.valid" class="btn btn-primary btn-lg btn-block">Transfer</button>
+    <button type="submit" [disabled]="!sendFundsForm.form.valid || showLoadingSpinner" class="btn btn-primary btn-lg btn-block">Transfer</button>
   </form>
+
+  <div [hidden]="!showLoadingSpinner">
+    <div class="s1">
+      <div class="s b sb1"></div>
+      <div class="s b sb2"></div>
+      <div class="s b sb3"></div>
+      <div class="s b sb4"></div>
+    </div>
+    <div class="s2">
+      <div class="s b sb5"></div>
+      <div class="s b sb6"></div>
+      <div class="s b sb7"></div>
+      <div class="s b sb8"></div>
+    </div>
+    <div class="bigcon">
+      <div class="big b"></div>
+    </div>
+  </div>
+
 </div>
