@@ -12,7 +12,12 @@
     <img class="copay-logo" src="assets/img/copay-logo-negative.svg" alt="Copay">
   </div>
 </div>
-<div [hidden]="!showLoadingSpinner" class="no-clickable-background"></div>
+<div [hidden]="!showLoadingSpinner" class="no-clickable-background">
+  <div class="loading-message">
+    <h4>Please wait</h4>
+    <h4>This process could take several minutes</h4>
+  </div>
+</div>
 <div class="container">
 
   <div [hidden]="!successMessage" class="alert alert-success">{{successMessage}}</div>

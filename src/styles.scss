@@ -75,6 +75,16 @@ body {
   box-sizing: border-box;
 }
 
+.no-clickable-background {
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    z-index: 999;
+    background-color:rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
 .s2 {
   position: fixed;
   height: 100px;
@@ -110,6 +120,13 @@ body {
   animation: bigcon 2s infinite linear;
   animation-delay: 0.25s;
   z-index: 1000;
+}
+
+.loading-message {
+    position: fixed;
+    top: 65vh;
+    color: lightgray;
+    width: 100%;
 }
 
 .b {
@@ -211,15 +228,6 @@ transform: scale(1);
     transform: scale(1);
      background-color: $copayColor;
   }
-}
-
-.no-clickable-background {
-    width: 100%;
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    z-index: 999;
-    background-color:rgba(0, 0, 0, 0.5);
 }
 
 /* End style for spinner */
