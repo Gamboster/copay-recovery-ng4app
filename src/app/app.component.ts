@@ -56,17 +56,18 @@ export class AppComponent implements OnInit {
   }
 
   updateCopayersForm() {
-    this.copayers = _.map(_.range(1, this.copayersNumber + 1), function (i) {
+    this.copayers = _.map(_.range(1, this.copayersNumber + 1), function(i) {
       return i;
     });
   }
 
   processInputs() {
+    this.hideMessage();
     let self = this;
     this.showLoadingSpinner = true;
     this.beforeScan = true;
 
-    var inputs = _.map(_.range(1, this.copayersNumber + 1), function (i) {
+    var inputs = _.map(_.range(1, this.copayersNumber + 1), function(i) {
       return {
         backup: self.data.backUp[i] || '',
         password: self.data.pass[i] || '',
@@ -82,7 +83,7 @@ export class AppComponent implements OnInit {
     }
     this.showMessage('Scanning funds...', 1);
 
-    var reportFn = function (data) {
+    var reportFn = function(data) {
       console.log('Report:', data);
     };
 
@@ -104,6 +105,21 @@ export class AppComponent implements OnInit {
     });
   }
 
+  fileChangeEvent($event, index: number): void {
+    this.readThis($event.target, index);
+  }
+
+  readThis(inputValue: any, index: number): void {
+    let self = this;
+    var file: File = inputValue.files[0];
+    var myReader: FileReader = new FileReader();
+
+    myReader.readAsText(file);
+    myReader.onloadend = function(e) {
+      self.data.backUp[index] = myReader.result;
+    }
+  }
+
   sendFunds(destinationAddress: string) {
     var rawTx;
 
@@ -119,10 +135,16 @@ export class AppComponent implements OnInit {
         console.log('Transaction complete. ' + (this.scanResults.balance - this.fee) + ' BTC sent to address: ' + destinationAddress);
       });
       // TODO check error cases
-    }, function (error) {
+    }, function(error) {
       this.showMessage('Could not broadcast transaction. Please, try later.', 3);
     });
   };
+
+  hideMessage() {
+    this.statusMessage = null;
+    this.successMessage = null;
+    this.errorMessage = null;
+  }
 
   showMessage(message: string, type: number) {
     /*
