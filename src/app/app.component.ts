@@ -53,6 +53,7 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.beforeScan = true;
     this.destinationAddress = '';
+    this.hideMessage();
   }
 
   updateCopayersForm() {
