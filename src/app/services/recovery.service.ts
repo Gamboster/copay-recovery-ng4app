@@ -33,7 +33,7 @@ export class RecoveryService {
     var wallet = this.buildWallet([credentials1]);
     console.log("PRUEBA-------------", wallet);
 
-    var reportFn = function(data) {
+    var reportFn = function (data) {
       console.log('Report:', data);
     };
     this.scanWallet(wallet, 20, reportFn, (err, res) => {
@@ -402,7 +402,7 @@ export class RecoveryService {
   }
 
   // Todo: implement txBroadcast as a Promise
-  txBroadcast(rawTx: string, network: string) {
+  txBroadcast(rawTx: string, network: string): Promise<any> {
     if (network == 'testnet') {
       return new Promise(resolve => {
         resolve(this.http.post('https://test-insight.bitpay.com/api/tx/send', {

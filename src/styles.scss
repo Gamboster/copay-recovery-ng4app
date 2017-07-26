@@ -15,10 +15,15 @@ $bodyBackgroundColor: #F1f3f5;
 
 html {
     position: relative;
+    min-height: 100%;
 }
 
 body {
     background-color: $bodyBackgroundColor;
+}
+
+.btn {
+    cursor: pointer;
 }
 
 .header {
@@ -57,13 +62,16 @@ body {
         color: $white;
         background-color: $bitpayColor;
         border-color: $bitpayColor;
-        cursor: pointer;
     }
 
     .btn-primary:hover {
         color: $white;
         background-color: $copayColorOld;
         border-color: $copayColorOld;
+    }
+    .btn-outline-primary:hover {
+        background-color: lightgrey;
+        border-color: lightgrey;
     }
     .card {
         margin-bottom: 1.5rem;
