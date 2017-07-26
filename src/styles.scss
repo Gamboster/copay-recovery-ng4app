@@ -1,0 +1,62 @@
+// Colors
+$bitpayColor: #293c92;
+$copayColor: #192c3a;
+$copayColorOld: #1abb9b;
+$white: #ffffff;
+$bodyBackgroundColor: #F1f3f5;
+
+@mixin gradient {
+    background: #293c92; /* For browsers that do not support gradients */
+    background: -webkit-linear-gradient(left, $bitpayColor , $copayColorOld); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(right, $bitpayColor, $copayColorOld); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(right, $bitpayColor, $copayColorOld); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(to right, $bitpayColor , $copayColorOld); /* Standard syntax */
+}
+
+body {
+    background-color: $bodyBackgroundColor;
+}
+
+.header {
+    height: 8rem;
+    @include gradient;
+    .header-content {
+        display: flex;
+        justify-content: space-around;
+        padding-top: 2.6rem;
+        .bitpay-logo, .copay-logo {
+            max-height: 3rem;
+        }
+        .header-center {
+            font-size: 1.6rem;
+            .header-title {
+                margin: 0rem;
+                color: $white;
+                text-shadow: 1px 1px $copayColor;
+            }
+            .repository-link {
+                text-align: center;
+            }
+        }
+    }
+}
+
+.container {
+    padding-top: 2rem;
+    padding-bottom: 2rem; 
+    .btn-primary {
+        color: $white;
+        background-color: $bitpayColor;
+        border-color: $bitpayColor;
+        cursor: pointer;
+    }
+
+    .btn-primary:hover {
+        color: $white;
+        background-color: $copayColorOld;
+        border-color: $copayColorOld;
+    }
+    .card {
+        margin-bottom: 1.5rem;
+    }
+}

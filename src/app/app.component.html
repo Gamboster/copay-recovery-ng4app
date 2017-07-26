@@ -1,58 +1,68 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <div class="container">
 
-  <h2>WALLET CONFIGURATION</h2>
-
   <form #processInputsForm="ngForm" (ngSubmit)="processInputs()" *ngIf="beforeScan">
-    <div class="form-group">
-      <label for="signaturesNumber">Required number of signatures</label>
-      <select class="form-control" id="signaturesNumber" name="signaturesNumber" [(ngModel)]="signaturesNumber">
-      <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
-    </select>
+
+    <div class="card">
+      <div class="card-block">
+        <h4 class="card-title">WALLET CONFIGURATION</h4>
+        <div class="row">
+          <div class="form-group col-sm-6">
+            <label for="signaturesNumber">Required number of signatures</label>
+            <select class="form-control" id="signaturesNumber" name="signaturesNumber" [(ngModel)]="signaturesNumber">
+            <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
+          </select>
+          </div>
+
+          <div class="form-group col-sm-6">
+            <label for="copayersNumber">Total number of Copayers</label>
+            <select class="form-control" id="copayersNumber" name="copayersNumber" [(ngModel)]="copayersNumber" (ngModelChange)="updateCopayersForm($event)">
+            <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
+          </select>
+          </div>
+
+          <div class="form-group col-sm-6">
+            <label for="network">Network</label>
+            <select class="form-control" id="network" name="network" [(ngModel)]="network">
+            <option *ngFor="let network of availableNetworks" [ngValue]="network">{{network}}</option>
+          </select>
+          </div>
+
+          <div class="form-group col-sm-6">
+            <label for="addressGap">Address Gap</label><small> (Usually does not need to be changed)</small>
+            <input type="number" class="form-control" id="addressGap" name="addressGap" [(ngModel)]="addressGap" required>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="copayersNumber">Total number of Copayers</label>
-      <select class="form-control" id="copayersNumber" name="copayersNumber" [(ngModel)]="copayersNumber" (ngModelChange)="updateCopayersForm($event)">
-      <option *ngFor="let option of availableOptions" [ngValue]="option">{{option}}</option>
-    </select>
-    </div>
+    <div class="card" *ngFor="let copayer of copayers">
+      <div class="card-block">
+        <h6 class="card-title">Backup for copayer {{copayer}}:</h6>
+        <div class="row">
+          <div class="form-group col-sm-6">
+            <label for="dataBackUp">Mnemonic or exported wallet data</label>
+            <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="data.backUp[copayer]">
+          </div>
 
-    <div class="form-group">
-      <label for="network">Network</label>
-      <select class="form-control" id="network" name="network" [(ngModel)]="network">
-      <option *ngFor="let network of availableNetworks" [ngValue]="network">{{network}}</option>
-    </select>
-    </div>
+          <div class="form-group col-sm-6">
+            <label for="contentFile">Or upload a file:</label>
+            <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt" aria-describedby="contentFileHelp"
+              (change)="fileChangeEvent($event)">
+            <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
+          </div>
+        </div>
 
-    <div class="form-group">
-      <label for="addressGap">Address Gap</label><span> (Usually does not need to be changed)</span>
-      <input type="number" class="form-control" id="addressGap" name="addressGap" [(ngModel)]="addressGap" required>
-    </div>
+        <div class="form-group">
+          <label for="dataPass">Password:</label>
+          <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="data.pass[copayer]">
+        </div>
 
-    <div *ngFor="let copayer of copayers">
-      <div class="form-group">
-        <label for="dataBackUp">Backup for copayer {{copayer}}:</label>
-        <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="data.backUp[copayer]" placeholder="Mnemonic or exported wallet data">
+        <div class="form-group">
+          <label for="dataPassX">Encrypted private key password</label><small> (in case you have one)</small>
+          <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="data.passX[copayer]">
+        </div>
       </div>
-
-      <div class="form-group">
-        <label for="contentFile">Or upload a file:</label>
-        <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt" aria-describedby="contentFileHelp"
-          (change)="fileChangeEvent($event)">
-        <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
-      </div>
-
-      <div class="form-group">
-        <label for="dataPass">Password:</label>
-        <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="data.pass[copayer]">
-      </div>
-
-      <div class="form-group">
-        <label for="dataPassX">Encrypted private key password (in case you have one):</label>
-        <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="data.passX[copayer]">
-      </div>
-
     </div>
 
     <button type="submit" [disabled]="!processInputsForm.form.valid" class="btn btn-primary btn-lg btn-block">Scan wallet</button>
@@ -62,10 +72,11 @@
     <div class="form-group panel">
       <label>{{totalBalance}}</label>
       <div class="input-group">
-        <div class="input-group-addon" >Destination Address:</div>
-        <input type="text" class="form-control" id="destinationAddress" name="destinationAddress" [(ngModel)]="destinationAddress">
+        <div class="input-group-addon">Destination Address:</div>
+        <input type="text" class="form-control" id="destinationAddress" name="destinationAddress" [(ngModel)]="destinationAddress"
+          required>
       </div>
     </div>
-    <button type="submit" class="btn btn-primary btn-lg btn-block">Transfer</button>
+    <button type="submit" [disabled]="!sendFundsForm.form.valid" class="btn btn-primary btn-lg btn-block">Transfer</button>
   </form>
 </div>
