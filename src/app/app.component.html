@@ -64,25 +64,25 @@
         <h6 class="card-title">Backup for copayer {{copayer}}:</h6>
         <div class="row">
           <div class="form-group col-sm-6">
-            <label for="dataBackUp">Mnemonic or exported wallet data</label>
-            <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="data.backUp[copayer]">
+            <label for="dataBackUp">Recovery phrase (mnemonic) or File/Text backup</label>
+            <input type="text" class="form-control" id="dataBackUp" name="dataBackUp" [(ngModel)]="data.backUp[copayer]" required>
           </div>
 
           <div class="form-group col-sm-6">
-            <label for="contentFile">Or upload a file:</label>
+            <label for="contentFile">Or upload a File/Text backup:</label>
             <input type="file" class="form-control-file" id="contentFile" name="contentFile" accept=".json, .txt" aria-describedby="contentFileHelp"
               (change)="fileChangeEvent($event, copayer)">
-            <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json, .txt</small>
+            <small id="fileHelp" class="form-text text-muted">Extensions accepted: .json and .txt</small>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="dataPass">Password:</label>
+          <label for="dataPass">Backup password:</label><small> (in case you have one)</small>
           <input type="password" class="form-control" id="dataPass" name="dataPass" [(ngModel)]="data.pass[copayer]">
         </div>
 
         <div class="form-group">
-          <label for="dataPassX">Encrypted private key password</label><small> (in case you have one)</small>
+          <label for="dataPassX">Encrypted private key password</label><small> (spending password)</small>
           <input type="password" class="form-control" id="dataPassX" name="dataPassX" [(ngModel)]="data.passX[copayer]">
         </div>
       </div>
