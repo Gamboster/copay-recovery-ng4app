@@ -1,6 +1,6 @@
 import { browser, by, element } from 'protractor';
 
-export class CopayRecoveryNg4appPage {
+export class CopayRecoveryPage {
   navigateTo() {
     return browser.get('/');
   }

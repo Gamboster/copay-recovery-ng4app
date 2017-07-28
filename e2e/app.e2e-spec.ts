@@ -1,10 +1,10 @@
-import { CopayRecoveryNg4appPage } from './app.po';
+import { CopayRecoveryPage } from './app.po';
 
-describe('copay-recovery-ng4app App', () => {
-  let page: CopayRecoveryNg4appPage;
+describe('copay-recovery App', () => {
+  let page: CopayRecoveryPage;
 
   beforeEach(() => {
-    page = new CopayRecoveryNg4appPage();
+    page = new CopayRecoveryPage();
   });
 
   it('should display welcome message', () => {
